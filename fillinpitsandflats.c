@@ -1,6 +1,4 @@
-#ifdef HAVE_MALLOC_H
-# include<malloc.h>
-#endif
+#include<malloc.h>
 #include<math.h>
 #include<stdio.h>
 #include<stdlib.h>
@@ -23,25 +21,23 @@ long nh,nl;
         return v-nl+NR_END;
 }
 
-float **matrix(nrl,nrh,ncl,nch)
-int nrl,nrh,ncl,nch;
+float **matrix(long nrl, long nrh, long ncl, long nch)
 /* allocate a float matrix with subscript range m[nrl..nrh][ncl..nch] */
 {
-    int i;
-    float **m;
+	long i, nrow=nrh-nrl+1,ncol=nch-ncl+1;
+	float **m;
 
-        /*allocate pointers to rows */
-        m=(float **) malloc((unsigned) (nrh-nrl+1)*sizeof(float*));
-    m -= nrl;
+	m=(float **) malloc((size_t)((nrow+NR_END)*sizeof(float*)));
+	m += NR_END;
+	m -= nrl;
 
-   /*allocate rows and set pointers to them */
-      for(i=nrl;i<=nrh;i++) {
-                      m[i]=(float *) malloc((unsigned) (nch-ncl+1)*sizeof(float)
-);
-            m[i] -= ncl;
-    }
-      /* return pointer to array of pointers to rows */
-      return m;
+	m[nrl]=(float *) malloc((size_t)((nrow*ncol+NR_END)*sizeof(float)));
+	m[nrl] += NR_END;
+	m[nrl] -= ncl;
+
+	for(i=nrl+1;i<=nrh;i++) m[i]=m[i-1]+ncol;
+
+	return m;
 }
 
 void setupgridneighbors()
@@ -62,7 +58,6 @@ void setupgridneighbors()
      jdown[1]=1;
      jup[lattice_size_y]=lattice_size_y;
 }
-
 
 void fillinpitsandflats(i,j)
 int i,j;
@@ -96,9 +91,9 @@ main ()
      
      fp1=fopen("inputdem","r");
      fp2=fopen("filleddem","w");
-     setupgridneighbors();
      lattice_size_x=300;
      lattice_size_y=300;
+     setupgridneighbors();
      topo=matrix(1,lattice_size_x,1,lattice_size_y);
      for (j=1;j<=lattice_size_y;j++)
       for (i=1;i<=lattice_size_x;i++)
